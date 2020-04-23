@@ -1,0 +1,189 @@
+
+<html lang="en">
+    <head>
+        <meta http-equiv="refresh" content="900">
+        <script type="text/javascript" src="https://unpkg.com/amazon-quicksight-embedding-sdk@1.0.2/dist/quicksight-embedding-js-sdk.min.js"></script>
+        <title>Embedding demo</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="https://sdk.amazonaws.com/js/aws-sdk-2.517.0.min.js"></script>
+    <script>
+    
+    $(document).ready(function () {
+        
+        var awsData = {
+            dashboardId: getParameterValues('dashboardid'),
+            userArn: getParameterValues('userarn'),
+            apiGatewayUrl:'https://31jt8u29j9.execute-api.us-east-1.amazonaws.com/prod/getDashboardEmbedURL?',
+        }
+        embedDashboardQuickSightAuthenticated(awsData);
+        
+        function getParameterValues(param) {
+            var url = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+            for (var i = 0; i < url.length; i++) {
+                var urlparam = url[i].split('=');
+                if (urlparam[0].toLowerCase() === param) {
+                    return decodeURIComponent(urlparam[1]);
+                }
+            }
+        }
+
+        function onVisualLoaded() {
+            var div = document.getElementById("loadedContainer");
+            div.innerHTML = "Dashboard fully loaded";
+        }
+
+        function onError() {
+            var div = document.getElementById("errorContainer");
+            div.innerHTML = "your seesion has expired";
+        }
+
+        function embedDashboard(embedUrl) {
+            var containerDiv = document.getElementById("dashboardContainer");
+            var params = {
+                    url: embedUrl,
+                    container: containerDiv,
+                    height: "1500px"
+                };
+                var dashboard = QuickSightEmbedding.embedDashboard(params);
+                dashboard.on('error', onError);
+                dashboard.on('load', onVisualLoaded);
+        }
+
+        function embedDashboardQuickSightAuthenticated(awsData) {  
+            apiGatewayGetDashboardEmbedUrl(
+                awsData.apiGatewayUrl, 
+                awsData.dashboardId, 
+                awsData.userArn,
+                false, 
+                false
+            );          
+        }
+
+        function apiGatewayGetDashboardEmbedUrl(
+            apiGatewayUrl, 
+            dashboardId, 
+            userArn,  
+            resetDisabled, 
+            undoRedoDisabled
+        ) {
+            const parameters = {
+                dashboardId: dashboardId,
+                userArn: userArn,
+                resetDisabled: resetDisabled,
+                undoRedoDisabled: undoRedoDisabled
+            }
+
+            const myQueryString = $.param(parameters);
+            apiGatewayUrl = apiGatewayUrl + myQueryString;
+
+            const headers = { 'Content-Type' : 'application/json' }
+
+            axios.get(apiGatewayUrl, { headers: headers})
+                .then((response) => {
+                    embedDashboard(response.data.EmbedUrl);;
+                })
+                .catch(function (error) {
+                    console.log('Error obtaining QuickSight dashboard embed url.');
+                });
+        }
+    });
+    </Script>
+    </head>
+    
+    <body onload="">
+        <style>
+HTML CSSResult
+EDIT ON
+body {
+  margin: 0;
+  padding: 0;
+  background: #ccc;
+}
+ 
+.nav ul {
+  list-style: none;
+  background-color: #444;
+  text-align: center;
+  padding: 0;
+  margin: 0;
+}
+.nav li {
+  font-family: 'Oswald', sans-serif;
+  font-size: 1.2em;
+  line-height: 40px;
+  height: 40px;
+  border-bottom: 1px solid #888;
+}
+ 
+.nav a {
+  text-decoration: none;
+  color: #fff;
+  display: block;
+  transition: .3s background-color;
+}
+ 
+.nav a:hover {
+  background-color: #005f5f;
+}
+ 
+.nav a.active {
+  background-color: #fff;
+  color: #444;
+  cursor: default;
+}
+ 
+@media screen and (min-width: 600px) {
+  .nav li {
+    width: 120px;
+    border-bottom: none;
+    height: 50px;
+    line-height: 50px;
+    font-size: 1.4em;
+  }
+ 
+  /* Option 1 - Display Inline */
+  .nav li {
+    display: inline-block;
+    margin-right: -4px;
+  }
+ 
+  /* Options 2 - Float
+  .nav li {
+    float: left;
+  }
+  .nav ul {
+    overflow: auto;
+    width: 600px;
+    margin: 0 auto;
+  }
+  .nav {
+    background-color: #444;
+  }
+  */
+}
+
+
+Resources
+            </style>
+
+
+
+        <header>
+            <div class="nav">
+              <ul>
+                <li class="home"><a href="#">GPEC</a></li>
+                <li class="tutorials"><a class="active" href="#">Dashboard</a></li>
+                <li class="about"><a href="#">About</a></li>
+                <li class="news"><a href="#">Newsletter</a></li>
+                <li class="contact"><a href="#">Contact</a></li>
+              </ul>
+            </div>
+          </header>       
+          
+        <div id="dashboardContainer"></div>
+        <div id="loadedContainer"></div>
+        <div id="errorContainer"></div>
+    </body>
+    </html>
+    
